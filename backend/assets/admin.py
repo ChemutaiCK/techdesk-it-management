@@ -2,7 +2,6 @@
 from django.contrib import admin
 from .models import Asset
 
-
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
     list_display = (
@@ -31,11 +30,9 @@ class AssetAdmin(admin.ModelAdmin):
         "assigned_to__username",
         "department",
     )
-
     readonly_fields = (
         "created_at",
         "updated_at",
     )
-
     list_select_related = ("assigned_to",)
     date_hierarchy = "created_at"
