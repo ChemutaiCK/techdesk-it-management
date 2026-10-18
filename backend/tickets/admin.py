@@ -38,3 +38,31 @@ class TicketAdmin(admin.ModelAdmin):
 
     list_select_related = ("requester", "assigned_to")
     date_hierarchy = "created_at"
+
+
+from .models import TicketComment
+
+
+@admin.register(TicketComment)
+class TicketCommentAdmin(admin.ModelAdmin):
+    list_display = (
+        "ticket",
+        "author",
+        "is_internal",
+        "created_at",
+    )
+
+    list_filter = (
+        "is_internal",
+        "created_at",
+    )
+
+    search_fields = (
+        "message",
+        "author__username",
+        "ticket__title",
+    )
+
+    readonly_fields = ("created_at",)
+    list_select_related = ("ticket", "author")
+    date_hierarchy = "created_at"

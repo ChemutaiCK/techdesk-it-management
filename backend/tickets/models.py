@@ -80,3 +80,32 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"Ticket {self.ticket_number} - {self.title}"
+
+
+class TicketComment(models.Model):
+    ticket = models.ForeignKey(
+        Ticket,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="ticket_comments",
+    )
+
+    message = models.TextField()
+
+    is_internal = models.BooleanField(
+        default=False,
+        help_text="Internal notes should only be visible to authorized IT staff.",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Comment on {self.ticket.ticket_number} by {self.author}"
