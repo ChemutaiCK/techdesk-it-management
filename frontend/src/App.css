@@ -132,13 +132,11 @@ a:focus-visible {
   color: var(--secondary);
   background: #f3f8fa;
 }
-
 .nav-item.active {
   color: var(--secondary);
   background: #eaf4f7;
   font-weight: 700;
 }
-
 .nav-icon {
   display: grid;
   width: 21px;
