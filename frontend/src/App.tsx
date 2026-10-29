@@ -1,5 +1,7 @@
 
 import { useState } from 'react'
+import Login from './Login'
+import type { LoginResponse } from './services/api'
 import './App.css'
 
 type TicketStatus = 'Open' | 'In Progress' | 'Resolved'
@@ -66,6 +68,45 @@ const navigation = [
 ]
 
 function App() {
+
+    const [token, setToken] = useState(
+    () => sessionStorage.getItem('techdesk_token'),
+  )
+
+  const [currentUser, setCurrentUser] = useState<LoginResponse['user'] | null>(
+    () => {
+      const savedUser = sessionStorage.getItem('techdesk_user')
+
+      if (!savedUser) return null
+
+      try {
+        return JSON.parse(savedUser) as LoginResponse['user']
+      } catch {
+        sessionStorage.removeItem('techdesk_user')
+        sessionStorage.removeItem('techdesk_token')
+        return null
+      }
+    },
+  )
+
+  function handleLogin(data: LoginResponse) {
+    sessionStorage.setItem('techdesk_token', data.token)
+    sessionStorage.setItem('techdesk_user', JSON.stringify(data.user))
+    setToken(data.token)
+    setCurrentUser(data.user)
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem('techdesk_token')
+    sessionStorage.removeItem('techdesk_user')
+    setToken(null)
+    setCurrentUser(null)
+  }
+
+  if (!token || !currentUser) {
+    return <Login onLogin={handleLogin} />
+  }
+  
   const [activePage, setActivePage] = useState('Overview')
   const [search, setSearch] = useState('')
   const [tickets, setTickets] = useState(initialTickets)
