@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import Login from './Login'
 import { getTickets, type ApiTicket, type LoginResponse } from './services/api'
@@ -47,7 +48,6 @@ function mapApiTicket(ticket: ApiTicket): Ticket {
   }
 }
 
-
 const navigation = [
   { label: 'Overview', icon: '◫' },
   { label: 'Tickets', icon: '▤' },
@@ -57,8 +57,7 @@ const navigation = [
 ]
 
 function App() {
-
-    const [token, setToken] = useState(
+  const [token, setToken] = useState<string | null>(
     () => sessionStorage.getItem('techdesk_token'),
   )
 
@@ -78,6 +77,12 @@ function App() {
     },
   )
 
+  const [activePage, setActivePage] = useState('Overview')
+  const [search, setSearch] = useState('')
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [ticketsLoading, setTicketsLoading] = useState(false)
+  const [ticketsError, setTicketsError] = useState('')
+
   function handleLogin(data: LoginResponse) {
     sessionStorage.setItem('techdesk_token', data.token)
     sessionStorage.setItem('techdesk_user', JSON.stringify(data.user))
@@ -90,95 +95,95 @@ function App() {
     sessionStorage.removeItem('techdesk_user')
     setToken(null)
     setCurrentUser(null)
+    setTickets([])
+    setActivePage('Overview')
+    setSearch('')
   }
-
-  
-  const [activePage, setActivePage] = useState('Overview')
-  const [search, setSearch] = useState('')
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [ticketsLoading, setTicketsLoading] = useState(false)
-  const [ticketsError, setTicketsError] = useState('')
 
   useEffect(() => {
-  if (!token) {
-    setTickets([])
-    return
-  }
+    if (!token) {
+      setTickets([])
+      setTicketsError('')
+      setTicketsLoading(false)
+      return
+    }
 
-  let cancelled = false
+    let cancelled = false
 
-  async function loadTickets() {
-    setTicketsLoading(true)
-    setTicketsError('')
+    async function loadTickets() {
+      setTicketsLoading(true)
+      setTicketsError('')
 
-    try {
-      const data = await getTickets(token!)
+      try {
+        const data = await getTickets(token!)
 
-      if (!cancelled) {
-        setTickets(data.map(mapApiTicket))
-      }
-    } catch (error) {
-      if (!cancelled) {
-        setTicketsError(
-          error instanceof Error
-            ? error.message
-            : 'Unable to load tickets.',
-        )
-      }
-    } finally {
-      if (!cancelled) {
-        setTicketsLoading(false)
+        if (!cancelled) {
+          setTickets(data.map(mapApiTicket))
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTicketsError(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load tickets.',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setTicketsLoading(false)
+        }
       }
     }
-  }
 
-  loadTickets()
+    void loadTickets()
 
-  return () => {
-    cancelled = true
-  }
-}, [token])
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const visibleTickets = tickets.filter((ticket) =>
-  [
-    ticket.id,
-    ticket.title,
-    ticket.requester,
-    ticket.category,
-    ticket.status,
-    ticket.priority,
-  ]
-    .join(' ')
-    .toLowerCase()
-    .includes(search.toLowerCase()),
-)
+    [
+      ticket.id,
+      ticket.title,
+      ticket.requester,
+      ticket.category,
+      ticket.status,
+      ticket.priority,
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  )
 
-const openTickets = tickets.filter(
-  (ticket) => ticket.status === 'Open',
-).length
+  const openTickets = tickets.filter(
+    (ticket) => ticket.status === 'Open',
+  ).length
 
-const inProgressTickets = tickets.filter(
-  (ticket) => ticket.status === 'In Progress',
-).length
-
-const resolvedTickets = tickets.filter(
-  (ticket) =>
-    ticket.status === 'Resolved' || ticket.status === 'Closed',
-).length
-
-  const openTickets = tickets.filter((ticket) => ticket.status === 'Open').length
   const inProgressTickets = tickets.filter(
     (ticket) => ticket.status === 'In Progress',
   ).length
+
   const resolvedTickets = tickets.filter(
-    (ticket) => ticket.status === 'Resolved',
+    (ticket) =>
+      ticket.status === 'Resolved' || ticket.status === 'Closed',
   ).length
 
+  if (!token || !currentUser) {
+    return <Login onLogin={handleLogin} />
+  }
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="#" onClick={() => setActivePage('Overview')}>
+        <a
+          className="brand"
+          href="#"
+          onClick={(event) => {
+            event.preventDefault()
+            setActivePage('Overview')
+          }}
+        >
           <span className="brand-mark">T</span>
           <span className="brand-name">
             Tech<span>Desk</span>
@@ -218,30 +223,30 @@ const resolvedTickets = tickets.filter(
         </div>
 
         <div className="profile">
-  <div className="avatar">
-    {currentUser.username.slice(0, 2).toUpperCase()}
-  </div>
+          <div className="avatar">
+            {currentUser.username.slice(0, 2).toUpperCase()}
+          </div>
 
-  <div className="profile-info">
-    <strong>
-      {[currentUser.first_name, currentUser.last_name]
-        .filter(Boolean)
-        .join(' ') || currentUser.username}
-    </strong>
-    <span>
-      {currentUser.is_staff ? 'System Administrator' : 'Team Member'}
-    </span>
-  </div>
+          <div className="profile-info">
+            <strong>
+              {[currentUser.first_name, currentUser.last_name]
+                .filter(Boolean)
+                .join(' ') || currentUser.username}
+            </strong>
+            <span>
+              {currentUser.is_staff ? 'System Administrator' : 'Team Member'}
+            </span>
+          </div>
 
-  <button
-    className="logout-button"
-    onClick={handleLogout}
-    title="Sign out"
-    aria-label="Sign out"
-  >
-    Logout
-  </button>
-</div>
+          <button
+            className="logout-button"
+            onClick={handleLogout}
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            Logout
+          </button>
+        </div>
       </aside>
 
       <main className="main-content">
@@ -262,6 +267,7 @@ const resolvedTickets = tickets.filter(
               />
               <kbd>⌘ K</kbd>
             </label>
+
             <button
               className="icon-button notification-button"
               aria-label="Notifications"
@@ -269,9 +275,10 @@ const resolvedTickets = tickets.filter(
             >
               ♧<span />
             </button>
+
             <div className="topbar-avatar">
-                {currentUser.username.slice(0, 2).toUpperCase()}
-              </div>
+              {currentUser.username.slice(0, 2).toUpperCase()}
+            </div>
           </div>
         </header>
 
@@ -281,12 +288,14 @@ const resolvedTickets = tickets.filter(
               <div className="eyebrow">
                 TUESDAY, OCTOBER 21, 2026
               </div>
+
               <h1>
                 {activePage === 'Overview'
-                    ? `Good morning, ${currentUser.first_name || currentUser.username}`
-                    : activePage}
+                  ? `Good morning, ${currentUser.first_name || currentUser.username}`
+                  : activePage}
                 <span className="wave">✳</span>
               </h1>
+
               <p className="page-subtitle">
                 Here&apos;s what&apos;s happening across your IT workspace today.
               </p>
@@ -359,9 +368,12 @@ const resolvedTickets = tickets.filter(
                 <article className="panel tickets-panel">
                   <div className="panel-heading">
                     <div>
-                      <h2>{activePage === 'Tickets' ? 'All tickets' : 'Recent tickets'}</h2>
+                      <h2>
+                        {activePage === 'Tickets' ? 'All tickets' : 'Recent tickets'}
+                      </h2>
                       <p>Track and manage your support requests.</p>
                     </div>
+
                     <button
                       className="text-button"
                       onClick={() => setActivePage('Tickets')}
@@ -374,6 +386,7 @@ const resolvedTickets = tickets.filter(
                     <span>
                       <span className="live-dot" /> Live ticket overview
                     </span>
+
                     <button
                       className="filter-button"
                       onClick={() => setSearch('Open')}
@@ -392,47 +405,67 @@ const resolvedTickets = tickets.filter(
                           <th>Status</th>
                         </tr>
                       </thead>
+
                       <tbody>
-                        {visibleTickets.map((ticket) => (
-                          <tr key={ticket.id}>
-                            <td>
-                              <div className="ticket-title">{ticket.title}</div>
-                              <div className="ticket-id">{ticket.id}</div>
-                            </td>
-                            <td>
-                              <div className="requester-name">
-                                {ticket.requester}
-                              </div>
-                              <div className="requester-department">
-                              {ticket.category}
-                            </div>
-                            </td>
-                            <td>
-                              <span
-                                className={`priority priority-${ticket.priority.toLowerCase()}`}
-                              >
-                                <span /> {ticket.priority}
-                              </span>
-                            </td>
-                            <td>
-                              <span
-                                      className={`status status-${ticket.status.toLowerCase().replace(' ', '-')}`}
-                                    >
-                                      {ticket.status}
-                                    </span>
-                            </td>
-                          </tr>
-                        ))}
-                        {visibleTickets.length === 0 && (
+                        {ticketsLoading ? (
                           <tr>
                             <td colSpan={4} className="empty-state">
-                              No tickets match your search.
+                              Loading tickets...
+                            </td>
+                          </tr>
+                        ) : ticketsError ? (
+                          <tr>
+                            <td colSpan={4} className="empty-state">
+                              {ticketsError}
+                            </td>
+                          </tr>
+                        ) : visibleTickets.length > 0 ? (
+                          visibleTickets.map((ticket) => (
+                            <tr key={ticket.id}>
+                              <td>
+                                <div className="ticket-title">{ticket.title}</div>
+                                <div className="ticket-id">{ticket.id}</div>
+                              </td>
+
+                              <td>
+                                <div className="requester-name">
+                                  {ticket.requester}
+                                </div>
+                                <div className="requester-department">
+                                  {ticket.category}
+                                </div>
+                              </td>
+
+                              <td>
+                                <span
+                                  className={`priority priority-${ticket.priority.toLowerCase()}`}
+                                >
+                                  <span /> {ticket.priority}
+                                </span>
+                              </td>
+
+                              <td>
+                                <span
+                                  className={`status status-${ticket.status.toLowerCase().replace(' ', '-')}`}
+                                >
+                                  {ticket.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="empty-state">
+                              {tickets.length === 0
+                                ? 'No tickets have been created yet.'
+                                : 'No tickets match your search.'}
                             </td>
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
+
                   <div className="table-footer">
                     Showing {visibleTickets.length} of {tickets.length} tickets
                   </div>
