@@ -191,13 +191,30 @@ function App() {
         </div>
 
         <div className="profile">
-          <div className="avatar">CK</div>
-          <div className="profile-info">
-            <strong>Cynthia Kirui</strong>
-            <span>System Administrator</span>
-          </div>
-          <span className="profile-menu">···</span>
-        </div>
+  <div className="avatar">
+    {currentUser.username.slice(0, 2).toUpperCase()}
+  </div>
+
+  <div className="profile-info">
+    <strong>
+      {[currentUser.first_name, currentUser.last_name]
+        .filter(Boolean)
+        .join(' ') || currentUser.username}
+    </strong>
+    <span>
+      {currentUser.is_staff ? 'System Administrator' : 'Team Member'}
+    </span>
+  </div>
+
+  <button
+    className="logout-button"
+    onClick={handleLogout}
+    title="Sign out"
+    aria-label="Sign out"
+  >
+    Logout
+  </button>
+</div>
       </aside>
 
       <main className="main-content">
@@ -225,7 +242,9 @@ function App() {
             >
               ♧<span />
             </button>
-            <div className="topbar-avatar">CK</div>
+            <div className="topbar-avatar">
+                {currentUser.username.slice(0, 2).toUpperCase()}
+              </div>
           </div>
         </header>
 
@@ -237,8 +256,8 @@ function App() {
               </div>
               <h1>
                 {activePage === 'Overview'
-                  ? 'Good morning, Cynthia'
-                  : activePage}
+                    ? `Good morning, ${currentUser.first_name || currentUser.username}`
+                    : activePage}
                 <span className="wave">✳</span>
               </h1>
               <p className="page-subtitle">

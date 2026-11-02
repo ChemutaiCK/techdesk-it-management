@@ -1288,3 +1288,21 @@ tbody tr:hover {
     animation-iteration-count: 1 !important;
   }
 }
+
+.logout-button {
+  flex-shrink: 0;
+  padding: 7px 9px;
+  color: var(--secondary);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 650;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  color: #fff;
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
