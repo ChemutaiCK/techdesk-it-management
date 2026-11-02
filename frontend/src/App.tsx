@@ -1,63 +1,52 @@
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Login from './Login'
-import type { LoginResponse } from './services/api'
+import { getTickets, type ApiTicket, type LoginResponse } from './services/api'
 import './App.css'
 
-type TicketStatus = 'Open' | 'In Progress' | 'Resolved'
-type Priority = 'High' | 'Medium' | 'Low'
+type TicketStatus =
+  | 'Open'
+  | 'In Progress'
+  | 'Pending'
+  | 'Resolved'
+  | 'Closed'
+
+type Priority = 'Critical' | 'High' | 'Medium' | 'Low'
 
 type Ticket = {
   id: string
   title: string
   requester: string
-  department: string
+  category: string
   priority: Priority
   status: TicketStatus
 }
 
-const initialTickets: Ticket[] = [
-  {
-    id: 'TK-1048',
-    title: 'Unable to connect to company VPN',
-    requester: 'Grace Wanjiku',
-    department: 'Finance',
-    priority: 'High',
-    status: 'Open',
-  },
-  {
-    id: 'TK-1047',
-    title: 'Laptop running slowly',
-    requester: 'Brian Otieno',
-    department: 'Human Resources',
-    priority: 'Medium',
-    status: 'In Progress',
-  },
-  {
-    id: 'TK-1046',
-    title: 'Access request for shared drive',
-    requester: 'Mercy Njeri',
-    department: 'Operations',
-    priority: 'Low',
-    status: 'Resolved',
-  },
-  {
-    id: 'TK-1045',
-    title: 'Printer not responding',
-    requester: 'David Kiptoo',
-    department: 'Administration',
-    priority: 'Medium',
-    status: 'Open',
-  },
-  {
-    id: 'TK-1044',
-    title: 'Email application configuration',
-    requester: 'Faith Achieng',
-    department: 'Marketing',
-    priority: 'Low',
-    status: 'In Progress',
-  },
-]
+function mapApiTicket(ticket: ApiTicket): Ticket {
+  const priorityMap: Record<ApiTicket['priority'], Priority> = {
+    CRITICAL: 'Critical',
+    HIGH: 'High',
+    MEDIUM: 'Medium',
+    LOW: 'Low',
+  }
+
+  const statusMap: Record<ApiTicket['status'], TicketStatus> = {
+    OPEN: 'Open',
+    IN_PROGRESS: 'In Progress',
+    PENDING: 'Pending',
+    RESOLVED: 'Resolved',
+    CLOSED: 'Closed',
+  }
+
+  return {
+    id: `TK-${ticket.ticket_number.slice(0, 8).toUpperCase()}`,
+    title: ticket.title,
+    requester: ticket.requester_name,
+    category: ticket.category,
+    priority: priorityMap[ticket.priority],
+    status: statusMap[ticket.status],
+  }
+}
+
 
 const navigation = [
   { label: 'Overview', icon: '◫' },
@@ -103,27 +92,79 @@ function App() {
     setCurrentUser(null)
   }
 
-  if (!token || !currentUser) {
-    return <Login onLogin={handleLogin} />
-  }
   
   const [activePage, setActivePage] = useState('Overview')
   const [search, setSearch] = useState('')
-  const [tickets, setTickets] = useState(initialTickets)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [ticketsLoading, setTicketsLoading] = useState(false)
+  const [ticketsError, setTicketsError] = useState('')
+
+  useEffect(() => {
+  if (!token) {
+    setTickets([])
+    return
+  }
+
+  let cancelled = false
+
+  async function loadTickets() {
+    setTicketsLoading(true)
+    setTicketsError('')
+
+    try {
+      const data = await getTickets(token!)
+
+      if (!cancelled) {
+        setTickets(data.map(mapApiTicket))
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setTicketsError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load tickets.',
+        )
+      }
+    } finally {
+      if (!cancelled) {
+        setTicketsLoading(false)
+      }
+    }
+  }
+
+  loadTickets()
+
+  return () => {
+    cancelled = true
+  }
+}, [token])
 
   const visibleTickets = tickets.filter((ticket) =>
-    [
-      ticket.id,
-      ticket.title,
-      ticket.requester,
-      ticket.department,
-      ticket.status,
-      ticket.priority,
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  )
+  [
+    ticket.id,
+    ticket.title,
+    ticket.requester,
+    ticket.category,
+    ticket.status,
+    ticket.priority,
+  ]
+    .join(' ')
+    .toLowerCase()
+    .includes(search.toLowerCase()),
+)
+
+const openTickets = tickets.filter(
+  (ticket) => ticket.status === 'Open',
+).length
+
+const inProgressTickets = tickets.filter(
+  (ticket) => ticket.status === 'In Progress',
+).length
+
+const resolvedTickets = tickets.filter(
+  (ticket) =>
+    ticket.status === 'Resolved' || ticket.status === 'Closed',
+).length
 
   const openTickets = tickets.filter((ticket) => ticket.status === 'Open').length
   const inProgressTickets = tickets.filter(
@@ -133,20 +174,6 @@ function App() {
     (ticket) => ticket.status === 'Resolved',
   ).length
 
-  function cycleStatus(id: string) {
-    const statuses: TicketStatus[] = ['Open', 'In Progress', 'Resolved']
-
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) => {
-        if (ticket.id !== id) return ticket
-
-        const nextStatus =
-          statuses[(statuses.indexOf(ticket.status) + 1) % statuses.length]
-
-        return { ...ticket, status: nextStatus }
-      }),
-    )
-  }
 
   return (
     <div className="app-shell">
@@ -377,8 +404,8 @@ function App() {
                                 {ticket.requester}
                               </div>
                               <div className="requester-department">
-                                {ticket.department}
-                              </div>
+                              {ticket.category}
+                            </div>
                             </td>
                             <td>
                               <span
@@ -388,13 +415,11 @@ function App() {
                               </span>
                             </td>
                             <td>
-                              <button
-                                className={`status status-${ticket.status.toLowerCase().replace(' ', '-')}`}
-                                title="Click to cycle ticket status"
-                                onClick={() => cycleStatus(ticket.id)}
-                              >
-                                {ticket.status}
-                              </button>
+                              <span
+                                      className={`status status-${ticket.status.toLowerCase().replace(' ', '-')}`}
+                                    >
+                                      {ticket.status}
+                                    </span>
                             </td>
                           </tr>
                         ))}
