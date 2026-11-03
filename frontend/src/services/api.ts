@@ -29,6 +29,13 @@ export type ApiTicket = {
   updated_at: string
 }
 
+export type CreateTicketPayload = {
+  title: string
+  description: string
+  category: 'HARDWARE' | 'SOFTWARE' | 'NETWORK' | 'ACCESS' | 'EMAIL' | 'OTHER'
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+}
+
 export async function login(
   username: string,
   password: string,
@@ -66,4 +73,30 @@ export async function getTickets(token: string): Promise<ApiTicket[]> {
   }
 
   return response.json() as Promise<ApiTicket[]>
+}
+
+export async function createTicket(
+  token: string,
+  payload: CreateTicketPayload,
+): Promise<ApiTicket> {
+  const response = await fetch(`${API_BASE_URL}/tickets/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === 'string'
+        ? data.detail
+        : Object.values(data).flat().join(' '),
+    )
+  }
+
+  return data as ApiTicket
 }

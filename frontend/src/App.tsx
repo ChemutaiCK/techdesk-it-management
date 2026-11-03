@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Login from './Login'
 import { getTickets, type ApiTicket, type LoginResponse } from './services/api'
 import './App.css'
+import CreateTicket from './CreateTicket'
 
 type TicketStatus =
   | 'Open'
@@ -82,6 +83,7 @@ function App() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [ticketsLoading, setTicketsLoading] = useState(false)
   const [ticketsError, setTicketsError] = useState('')
+  const [showCreateTicket, setShowCreateTicket] = useState(false)
 
   function handleLogin(data: LoginResponse) {
     sessionStorage.setItem('techdesk_token', data.token)
@@ -305,9 +307,9 @@ function App() {
               className="primary-button"
               onClick={() => {
                 setActivePage('Tickets')
-                window.alert('Ticket creation form coming in the next step.')
+                setShowCreateTicket(true)
               }}
-            >
+             >
               <span>＋</span> Create ticket
             </button>
           </section>
@@ -559,6 +561,21 @@ function App() {
             </span>
           </footer>
         </div>
+
+
+        {showCreateTicket && token && (
+            <CreateTicket
+              token={token}
+              onClose={() => setShowCreateTicket(false)}
+              onCreated={(newTicket) => {
+                setTickets((currentTickets) => [
+                  mapApiTicket(newTicket),
+                  ...currentTickets,
+                ])
+                setShowCreateTicket(false)
+              }}
+            />
+          )}
       </main>
     </div>
   )

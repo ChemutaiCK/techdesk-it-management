@@ -1,0 +1,154 @@
+
+.ticket-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(19, 35, 49, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.ticket-modal {
+  width: 100%;
+  max-width: 600px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(20, 40, 55, 0.2);
+}
+
+.ticket-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.ticket-modal-header h2 {
+  margin: 0 0 6px;
+  color: #23627d;
+  font-size: 22px;
+}
+
+.ticket-modal-header p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.ticket-modal-close {
+  border: none;
+  background: transparent;
+  color: #718096;
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ticket-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex: 1;
+}
+
+.ticket-form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4f6a;
+}
+
+.ticket-form-group input,
+.ticket-form-group textarea,
+.ticket-form-group select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 13px;
+  border: 1px solid #dce5eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #263746;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ticket-form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.ticket-form-group input:focus,
+.ticket-form-group textarea:focus,
+.ticket-form-group select:focus {
+  border-color: #3e8ca6;
+  box-shadow: 0 0 0 3px rgba(62, 140, 166, 0.12);
+}
+
+.ticket-form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.ticket-form-error {
+  background: #fff1f1;
+  color: #b42318;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.ticket-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.ticket-cancel-button,
+.ticket-submit-button {
+  padding: 11px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ticket-cancel-button {
+  border: 1px solid #dce5eb;
+  background: #ffffff;
+  color: #526273;
+}
+
+.ticket-submit-button {
+  border: none;
+  background: #23627d;
+  color: #ffffff;
+}
+
+.ticket-submit-button:hover {
+  background: #1b5068;
+}
+
+.ticket-submit-button:disabled,
+.ticket-cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .ticket-modal {
+    padding: 20px;
+  }
+
+  .ticket-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
