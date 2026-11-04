@@ -100,3 +100,29 @@ export async function createTicket(
 
   return data as ApiTicket
 }
+
+export async function getTicket(
+  token: string,
+  ticketId: number,
+): Promise<ApiTicket> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${ticketId}/`,
+    {
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === 'string'
+        ? data.detail
+        : 'Unable to load ticket details.',
+    )
+  }
+
+  return data as ApiTicket
+}

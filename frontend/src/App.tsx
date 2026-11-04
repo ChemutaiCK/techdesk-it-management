@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from 'react'
 import Login from './Login'
-import { getTickets, type ApiTicket, type LoginResponse } from './services/api'
+import { getTickets, getTicket, type ApiTicket, type LoginResponse } from './services/api'
 import './App.css'
 import CreateTicket from './CreateTicket'
+import TicketDetails from './TicketDetails'
 
 type TicketStatus =
   | 'Open'
@@ -16,6 +17,7 @@ type Priority = 'Critical' | 'High' | 'Medium' | 'Low'
 
 type Ticket = {
   id: string
+  databaseId: number
   title: string
   requester: string
   category: string
@@ -84,6 +86,9 @@ function App() {
   const [ticketsLoading, setTicketsLoading] = useState(false)
   const [ticketsError, setTicketsError] = useState('')
   const [showCreateTicket, setShowCreateTicket] = useState(false)
+  const [selectedTicket, setSelectedTicket] = useState<ApiTicket | null>(null)
+  const [ticketDetailsLoading, setTicketDetailsLoading] = useState(false)
+  const [ticketDetailsError, setTicketDetailsError] = useState('')
 
   function handleLogin(data: LoginResponse) {
     sessionStorage.setItem('techdesk_token', data.token)
@@ -423,7 +428,30 @@ function App() {
                           </tr>
                         ) : visibleTickets.length > 0 ? (
                           visibleTickets.map((ticket) => (
-                            <tr key={ticket.id}>
+                            <tr
+                                key={ticket.id}
+                                className="clickable-ticket-row"
+                                onClick={async () => {
+                                          if (!token) return
+
+                                          setSelectedTicket(null)
+                                          setTicketDetailsError('')
+                                          setTicketDetailsLoading(true)
+
+                                          try {
+                                            const fullTicket = await getTicket(token, Number(ticket.id.replace('TK-', '')))
+                                            setSelectedTicket(fullTicket)
+                                          } catch (error) {
+                                            setTicketDetailsError(
+                                              error instanceof Error
+                                                ? error.message
+                                                : 'Unable to load ticket details.',
+                                            )
+                                          } finally {
+                                            setTicketDetailsLoading(false)
+                                          }
+                                        }}
+                              >
                               <td>
                                 <div className="ticket-title">{ticket.title}</div>
                                 <div className="ticket-id">{ticket.id}</div>
@@ -576,6 +604,14 @@ function App() {
               }}
             />
           )}
+            {selectedTicket && (
+              <TicketDetails
+                ticket={tickets.find(
+                  (ticket) => ticket.id === selectedTicket.id
+                ) ? selectedTicket : selectedTicket}
+                onClose={() => setSelectedTicket(null)}
+              />
+            )}
       </main>
     </div>
   )
