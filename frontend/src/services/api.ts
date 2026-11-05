@@ -189,3 +189,63 @@ export async function getTechnicians(
 
   return data as Technician[]
 }
+
+export async function assignTicket(
+  token: string,
+  ticketId: number,
+  technicianId: number | null,
+): Promise<ApiTicket> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${ticketId}/`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`,
+      },
+      body: JSON.stringify({
+        assigned_to: technicianId,
+      }),
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === 'string'
+        ? data.detail
+        : 'Unable to assign ticket.',
+    )
+  }
+
+  return data as ApiTicket
+}
+
+export type CurrentUser = {
+  id: number
+  username: string
+  is_admin: boolean
+}
+
+export async function getCurrentUser(
+  token: string,
+): Promise<CurrentUser> {
+  const response = await fetch(`${API_BASE_URL}/accounts/me/`, {
+    headers: {
+      Authorization: `Token ${token}`,
+    },
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === 'string'
+        ? data.detail
+        : 'Unable to load user details.',
+    )
+  }
+
+  return data as CurrentUser
+}

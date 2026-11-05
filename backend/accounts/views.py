@@ -45,6 +45,11 @@ class CurrentUserView(APIView):
     def get(self, request):
         user = request.user
 
+        is_admin = (
+            user.is_superuser
+            or user.groups.filter(name="Administrator").exists()
+        )
+
         return Response({
             "id": user.id,
             "username": user.username,
@@ -52,6 +57,7 @@ class CurrentUserView(APIView):
             "last_name": user.last_name,
             "email": user.email,
             "is_staff": user.is_staff,
+            "is_admin": is_admin,
             "roles": list(user.groups.values_list("name", flat=True)),
         })
 

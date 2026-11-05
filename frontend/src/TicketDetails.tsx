@@ -1,13 +1,17 @@
 
-import type { ApiTicket } from './services/api'
+import { useEffect, useState } from 'react'
+import type { ApiTicket, Technician } from './services/api'
 import './TicketDetails.css'
-import { useState } from 'react'
-import { updateTicketStatus } from './services/api'
-
+import {
+  assignTicket,
+  getTechnicians,
+  updateTicketStatus,
+} from './services/api'
 
 type TicketDetailsProps = {
   ticket: ApiTicket
   token: string
+  isAdmin: boolean
   onClose: () => void
   onTicketUpdated: (updatedTicket: ApiTicket) => void
 }
@@ -15,6 +19,7 @@ type TicketDetailsProps = {
 function TicketDetails({
   ticket,
   token,
+  isAdmin,
   onClose,
   onTicketUpdated,
 }: TicketDetailsProps) {
@@ -23,6 +28,31 @@ function TicketDetails({
   )
   const [updating, setUpdating] = useState(false)
   const [updateError, setUpdateError] = useState('')
+  const [technicians, setTechnicians] = useState<Technician[]>([])
+const [selectedTechnician, setSelectedTechnician] = useState(
+  ticket.assigned_to ? String(ticket.assigned_to) : '',
+)
+const [assigning, setAssigning] = useState(false)
+const [assignmentError, setAssignmentError] = useState('')
+useEffect(() => {
+  if (!isAdmin) return
+
+  const loadTechnicians = async () => {
+    try {
+      const data = await getTechnicians(token)
+      setTechnicians(data)
+    } catch (error) {
+      setAssignmentError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load technicians.',
+      )
+    }
+  }
+
+  loadTechnicians()
+}, [isAdmin, token])
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleString('en-KE', {
       dateStyle: 'medium',
@@ -51,6 +81,33 @@ function TicketDetails({
       )
     } finally {
       setUpdating(false)
+    }
+  }
+
+    const handleAssignment = async () => {
+    const technicianId = selectedTechnician
+      ? Number(selectedTechnician)
+      : null
+
+    setAssigning(true)
+    setAssignmentError('')
+
+    try {
+      const updatedTicket = await assignTicket(
+        token,
+        ticket.id,
+        technicianId,
+      )
+
+      onTicketUpdated(updatedTicket)
+    } catch (error) {
+      setAssignmentError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to assign technician.',
+      )
+    } finally {
+      setAssigning(false)
     }
   }
 
@@ -112,6 +169,50 @@ function TicketDetails({
             {statusLabels[ticket.status] ?? ticket.status}
           </span>
         </div>
+
+        {isAdmin && (
+  <div className="ticket-details-section">
+    <h3>Assign technician</h3>
+
+    <select
+      value={selectedTechnician}
+      onChange={(event) =>
+        setSelectedTechnician(event.target.value)
+      }
+      disabled={assigning}
+    >
+      <option value="">Unassigned</option>
+
+      {technicians.map((technician) => (
+        <option
+          key={technician.id}
+          value={String(technician.id)}
+        >
+          {technician.first_name || technician.last_name
+            ? `${technician.first_name} ${technician.last_name}`.trim()
+            : technician.username}
+        </option>
+      ))}
+    </select>
+
+    <button
+      type="button"
+      onClick={handleAssignment}
+      disabled={
+        assigning ||
+        selectedTechnician ===
+          (ticket.assigned_to ? String(ticket.assigned_to) : '')
+      }
+    >
+      {assigning ? 'Assigning...' : 'Save Assignment'}
+    </button>
+
+    {assignmentError && (
+      <p className="ticket-details-error">{assignmentError}</p>
+    )}
+  </div>
+)}
+
           <div className="ticket-details-section">
             <h3>Update ticket status</h3>
 

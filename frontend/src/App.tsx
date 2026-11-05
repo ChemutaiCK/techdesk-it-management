@@ -1,7 +1,13 @@
 
 import { useEffect, useState } from 'react'
 import Login from './Login'
-import { getTickets, getTicket, type ApiTicket, type LoginResponse } from './services/api'
+import {
+  getTickets,
+  getTicket,
+  getCurrentUser,
+  type ApiTicket,
+  type LoginResponse,
+} from './services/api'
 import './App.css'
 import CreateTicket from './CreateTicket'
 import TicketDetails from './TicketDetails'
@@ -83,6 +89,8 @@ function App() {
     },
   )
 
+  const [isAdmin, setIsAdmin] = useState(false)
+
   const [activePage, setActivePage] = useState('Overview')
   const [search, setSearch] = useState('')
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -151,6 +159,37 @@ function App() {
       cancelled = true
     }
   }, [token])
+
+
+  useEffect(() => {
+  if (!token) {
+    setIsAdmin(false)
+    return
+  }
+
+  let cancelled = false
+
+  async function loadCurrentUser() {
+    try {
+      const user = await getCurrentUser(token!)
+
+      if (!cancelled) {
+        setIsAdmin(user.is_admin)
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setIsAdmin(false)
+        console.error('Unable to load current user:', error)
+      }
+    }
+  }
+
+  void loadCurrentUser()
+
+  return () => {
+    cancelled = true
+  }
+}, [token])
 
   const visibleTickets = tickets.filter((ticket) =>
     [
@@ -628,6 +667,7 @@ function App() {
   <TicketDetails
     ticket={selectedTicket}
     token={token ?? ''}
+    isAdmin={isAdmin}
     onClose={() => setSelectedTicket(null)}
     onTicketUpdated={(updatedTicket) => {
       setSelectedTicket(updatedTicket)
