@@ -25,6 +25,7 @@ type Ticket = {
   status: TicketStatus
 }
 
+
 function mapApiTicket(ticket: ApiTicket): Ticket {
   const priorityMap: Record<ApiTicket['priority'], Priority> = {
     CRITICAL: 'Critical',
@@ -43,6 +44,7 @@ function mapApiTicket(ticket: ApiTicket): Ticket {
 
   return {
     id: `TK-${ticket.ticket_number.slice(0, 8).toUpperCase()}`,
+    databaseId: ticket.id,
     title: ticket.title,
     requester: ticket.requester_name,
     category: ticket.category,
@@ -50,6 +52,7 @@ function mapApiTicket(ticket: ApiTicket): Ticket {
     status: statusMap[ticket.status],
   }
 }
+
 
 const navigation = [
   { label: 'Overview', icon: '◫' },
@@ -439,7 +442,7 @@ function App() {
                                           setTicketDetailsLoading(true)
 
                                           try {
-                                            const fullTicket = await getTicket(token, Number(ticket.id.replace('TK-', '')))
+                                          const fullTicket = await getTicket(token, ticket.databaseId)
                                             setSelectedTicket(fullTicket)
                                           } catch (error) {
                                             setTicketDetailsError(
@@ -604,11 +607,26 @@ function App() {
               }}
             />
           )}
+          {ticketDetailsLoading && (
+  <div className="ticket-details-loading">
+    Loading ticket details...
+  </div>
+)}
+
+{ticketDetailsError && (
+  <div className="ticket-details-error">
+    {ticketDetailsError}
+    <button
+      type="button"
+      onClick={() => setTicketDetailsError('')}
+    >
+      Close
+    </button>
+  </div>
+)}
             {selectedTicket && (
               <TicketDetails
-                ticket={tickets.find(
-                  (ticket) => ticket.id === selectedTicket.id
-                ) ? selectedTicket : selectedTicket}
+                ticket={selectedTicket}
                 onClose={() => setSelectedTicket(null)}
               />
             )}
