@@ -104,49 +104,46 @@ class TicketDetailView(generics.RetrieveUpdateAPIView):
         )
         is_technician = user_has_role(user, "IT Technician")
 
+        # Only administrators can assign or unassign tickets.
+        if "assigned_to" in data:
+            assigned_to_id = data.pop("assigned_to")
+
+            if not is_admin:
+                raise PermissionDenied(
+                    "Only administrators can change ticket assignments."
+                )
+
+            if assigned_to_id in (None, ""):
+                data["assigned_to"] = None
+            else:
+                try:
+                    data["assigned_to"] = User.objects.get(
+                        pk=assigned_to_id,
+                        is_active=True,
+                        groups__name="IT Technician",
+                    )
+                except (User.DoesNotExist, ValueError, TypeError):
+                    raise PermissionDenied(
+                        "The selected assignee is not an active IT Technician."
+                    )
+
+        # Only administrators and technicians can update restricted fields.
         restricted_for_non_admin = {
-            "assigned_to",
             "status",
             "priority",
             "category",
             "resolution_notes",
         }
 
-        if not is_admin and restricted_for_non_admin.intersection(data.keys()):
-            if not is_technician:
-                raise PermissionDenied(
-                    "Only IT technicians and administrators can update "
-                    "assignment, status, priority, category, or resolution."
-                )
-
-           if "assigned_to" in data:
-    assigned_to_id = data.pop("assigned_to")
-
-    if not is_admin:
-        raise PermissionDenied(
-            "Only administrators can change ticket assignments."
-        )
-
-    if assigned_to_id in (None, ""):
-        data["assigned_to"] = None
-    else:
-        try:
-            data["assigned_to"] = User.objects.get(
-                pk=assigned_to_id,
-                is_active=True,
-                groups__name="IT Technician",
-            )
-        except (User.DoesNotExist, ValueError, TypeError):
+        if (
+            not is_admin
+            and restricted_for_non_admin.intersection(data.keys())
+            and not is_technician
+        ):
             raise PermissionDenied(
-                "The selected assignee is not an active IT Technician."
+                "Only IT technicians and administrators can update "
+                "status, priority, category, or resolution."
             )
-
-        if "status" in data:
-            if not (is_admin or is_technician):
-                raise PermissionDenied(
-                    "Only IT technicians and administrators can change "
-                    "ticket status."
-                )
 
         changes = {}
 
@@ -161,6 +158,7 @@ class TicketDetailView(generics.RetrieveUpdateAPIView):
         }
 
         unknown_fields = set(data.keys()) - allowed_fields
+
         if unknown_fields:
             from rest_framework.exceptions import ValidationError
 
@@ -170,9 +168,7 @@ class TicketDetailView(generics.RetrieveUpdateAPIView):
             })
 
         for field, value in data.items():
-            if field == "assigned_to":
-                changes[field] = value
-            elif field in allowed_fields:
+            if field in allowed_fields:
                 changes[field] = value
 
         updated_ticket = update_ticket(ticket.pk, changes=changes)
@@ -189,3 +185,5 @@ class TicketDetailView(generics.RetrieveUpdateAPIView):
 
         serializer = self.get_serializer(updated_ticket)
         return Response(serializer.data)
+
+    
