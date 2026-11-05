@@ -1,9 +1,10 @@
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import LoginSerializer
+from .serializers import LoginSerializer, TechnicianSerializer
 
 
 class LoginView(APIView):
@@ -51,3 +52,27 @@ class CurrentUserView(APIView):
             "is_staff": user.is_staff,
             "roles": list(user.groups.values_list("name", flat=True)),
         })
+
+class TechnicianListView(generics.ListAPIView):
+    serializer_class = TechnicianSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not (
+            user.is_superuser
+            or user.groups.filter(name="Administrator").exists()
+        ):
+            raise PermissionDenied(
+                "Only administrators can view the technician list."
+            )
+
+        return (
+              User.objects.filter(
+                is_active=True,
+                groups__name="IT Technician",
+            )
+            .distinct()
+            .order_by("first_name", "last_name")
+        )
