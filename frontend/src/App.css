@@ -1306,3 +1306,12 @@ tbody tr:hover {
   background: var(--secondary);
   border-color: var(--secondary);
 }
+
+.clickable-ticket-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clickable-ticket-row:hover {
+  background-color: #f0f7fa;
+}
