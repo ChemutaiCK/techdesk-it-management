@@ -156,3 +156,36 @@ export async function updateTicketStatus(
 
   return data as ApiTicket
 }
+
+export type Technician = {
+  id: number
+  username: string
+  first_name: string
+  last_name: string
+  email: string
+}
+
+export async function getTechnicians(
+  token: string,
+): Promise<Technician[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/accounts/technicians/`,
+    {
+      headers: {
+        Authorization: `Token ${token}`,
+      },
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === 'string'
+        ? data.detail
+        : 'Unable to load technicians.',
+    )
+  }
+
+  return data as Technician[]
+}

@@ -119,28 +119,27 @@ class TicketDetailView(generics.RetrieveUpdateAPIView):
                     "assignment, status, priority, category, or resolution."
                 )
 
-            if "assigned_to" in data:
-                raise PermissionDenied(
-                    "Only administrators can change ticket assignments."
-                )
+           if "assigned_to" in data:
+    assigned_to_id = data.pop("assigned_to")
 
-        if "assigned_to" in data:
-            assigned_to_id = data.pop("assigned_to")
+    if not is_admin:
+        raise PermissionDenied(
+            "Only administrators can change ticket assignments."
+        )
 
-            if not is_admin:
-                raise PermissionDenied(
-                    "Only administrators can change ticket assignments."
-                )
-
-            try:
-                data["assigned_to"] = User.objects.get(
-                    pk=assigned_to_id,
-                    is_active=True,
-                )
-            except (User.DoesNotExist, ValueError, TypeError):
-                raise PermissionDenied(
-                    "The selected assignee is invalid or inactive."
-                )
+    if assigned_to_id in (None, ""):
+        data["assigned_to"] = None
+    else:
+        try:
+            data["assigned_to"] = User.objects.get(
+                pk=assigned_to_id,
+                is_active=True,
+                groups__name="IT Technician",
+            )
+        except (User.DoesNotExist, ValueError, TypeError):
+            raise PermissionDenied(
+                "The selected assignee is not an active IT Technician."
+            )
 
         if "status" in data:
             if not (is_admin or is_technician):

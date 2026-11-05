@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.authtoken.models import Token
@@ -6,6 +7,7 @@ from rest_framework.views import APIView
 
 from .serializers import LoginSerializer, TechnicianSerializer
 
+User = get_user_model()
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
