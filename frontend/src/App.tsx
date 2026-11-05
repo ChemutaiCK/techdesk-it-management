@@ -625,11 +625,23 @@ function App() {
   </div>
 )}
             {selectedTicket && (
-              <TicketDetails
-                ticket={selectedTicket}
-                onClose={() => setSelectedTicket(null)}
-              />
-            )}
+  <TicketDetails
+    ticket={selectedTicket}
+    token={token ?? ''}
+    onClose={() => setSelectedTicket(null)}
+    onTicketUpdated={(updatedTicket) => {
+      setSelectedTicket(updatedTicket)
+
+      setTickets((currentTickets) =>
+        currentTickets.map((ticket) =>
+          ticket.databaseId === updatedTicket.id
+            ? mapApiTicket(updatedTicket)
+            : ticket,
+        ),
+      )
+    }}
+  />
+)}
       </main>
     </div>
   )

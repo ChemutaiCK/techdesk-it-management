@@ -1,18 +1,57 @@
 
 import type { ApiTicket } from './services/api'
 import './TicketDetails.css'
+import { useState } from 'react'
+import { updateTicketStatus } from './services/api'
+
 
 type TicketDetailsProps = {
   ticket: ApiTicket
+  token: string
   onClose: () => void
+  onTicketUpdated: (updatedTicket: ApiTicket) => void
 }
 
-function TicketDetails({ ticket, onClose }: TicketDetailsProps) {
+function TicketDetails({
+  ticket,
+  token,
+  onClose,
+  onTicketUpdated,
+}: TicketDetailsProps) {
+  const [newStatus, setNewStatus] = useState<ApiTicket['status']>(
+    ticket.status,
+  )
+  const [updating, setUpdating] = useState(false)
+  const [updateError, setUpdateError] = useState('')
   const formatDate = (date: string) => {
     return new Date(date).toLocaleString('en-KE', {
       dateStyle: 'medium',
       timeStyle: 'short',
     })
+  }
+    const handleStatusUpdate = async () => {
+    if (newStatus === ticket.status) return
+
+    setUpdating(true)
+    setUpdateError('')
+
+    try {
+      const updatedTicket = await updateTicketStatus(
+        token,
+        ticket.id,
+        newStatus,
+      )
+
+      onTicketUpdated(updatedTicket)
+    } catch (error) {
+      setUpdateError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to update ticket status.',
+      )
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const categoryLabels: Record<string, string> = {
@@ -73,6 +112,35 @@ function TicketDetails({ ticket, onClose }: TicketDetailsProps) {
             {statusLabels[ticket.status] ?? ticket.status}
           </span>
         </div>
+          <div className="ticket-details-section">
+            <h3>Update ticket status</h3>
+
+            <select
+              value={newStatus}
+              onChange={(event) =>
+                setNewStatus(event.target.value as ApiTicket['status'])
+              }
+              disabled={updating}
+            >
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="PENDING">Pending</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={handleStatusUpdate}
+              disabled={updating || newStatus === ticket.status}
+            >
+              {updating ? 'Updating...' : 'Save Status'}
+            </button>
+
+            {updateError && (
+              <p className="ticket-details-error">{updateError}</p>
+            )}
+          </div>
 
         <div className="ticket-details-section">
           <h3>Description</h3>

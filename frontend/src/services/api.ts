@@ -126,3 +126,33 @@ export async function getTicket(
 
   return data as ApiTicket
 }
+
+export async function updateTicketStatus(
+  token: string,
+  ticketId: number,
+  status: ApiTicket['status'],
+): Promise<ApiTicket> {
+  const response = await fetch(
+    `${API_BASE_URL}/tickets/${ticketId}/`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      typeof data.detail === 'string'
+        ? data.detail
+        : 'Unable to update ticket status.',
+    )
+  }
+
+  return data as ApiTicket
+}

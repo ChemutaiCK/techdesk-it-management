@@ -138,3 +138,94 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==========================================
+   TICKET STATUS UPDATE
+========================================== */
+
+.ticket-details-section select {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 14px;
+  margin-top: 10px;
+  border: 1px solid #dce5eb;
+  border-radius: 9px;
+  background: #f8fafc;
+  color: #3d4f6a;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ticket-details-section select:focus {
+  border-color: #3e8ca6;
+  box-shadow: 0 0 0 3px rgba(62, 140, 166, 0.12);
+  background: #ffffff;
+}
+
+.ticket-details-section select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ticket-details-section > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 125px;
+  margin-top: 14px;
+  padding: 11px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #23627d;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ticket-details-section > button:hover:not(:disabled) {
+  background: #3e8ca6;
+  box-shadow: 0 4px 12px rgba(35, 98, 125, 0.18);
+  transform: translateY(-1px);
+}
+
+.ticket-details-section > button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ticket-details-section > button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Update error message */
+
+.ticket-details-error {
+  margin-top: 12px;
+  padding: 10px 13px;
+  border: 1px solid #f3d0d0;
+  border-radius: 8px;
+  background: #fff5f5;
+  color: #b42318;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Loading message */
+
+.ticket-details-loading {
+  padding: 16px;
+  color: #3d4f6a;
+  font-size: 14px;
+  text-align: center;
+}
